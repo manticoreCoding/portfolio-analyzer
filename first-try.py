@@ -1,34 +1,45 @@
 import pandas as pd
 import json
 import requests
+import os
+from pathlib import Path
 
-def loadsampledata():
-    data = pd.read_csv('..\..\Portfolio\Positions - Default.csv')
-
-    return data
-
-data = loadsampledata()
-
-symbols = data.Symbol.dropna().unique()
-#symbols2 = data.dropna().Symbol.unique()
-
-#pd.unique(data["Symbol"])
-
-#data["Symbol"].unique()
-#data.Symbol.unique()
-
-print(len(symbols), symbols)
-#print(len(symbols2), symbols2)
+data_loc = r'Portfolio\Positions - Default.csv'
 
 headers = {
     'x-rapidapi-key': "71a5d7c9a5msh0ce9fc09f6a1668p137554jsnde2c9287d2b4",
     'x-rapidapi-host': "apidojo-yahoo-finance-v1.p.rapidapi.com"
 }
 
+def loadsampledata():
+    #data = pd.read_csv('..\..\Portfolio\Positions - Default.csv')
+    
+    project_path = Path(os.getcwd())
+    data_path = Path(data_loc)
+    #data_path = Path('Portfolio\Positions - Default.csv')
+    final_path = os.path.join(project_path.parent.parent, data_path)
+
+    data = pd.read_csv(final_path)
+
+    return data
+
+class AnalysisResult:
+    
+    instrument_found = False
+    instrument_type = 'unknown'
+    instrument_symbol = ''
+    instrument_data = {}
+
+    def __init__(self, symbol):
+        self.instrument_symbol = symbol
+
+
+
 def get_analysis(symbol):
     url = "https://apidojo-yahoo-finance-v1.p.rapidapi.com/stock/v2/get-analysis"
 
     querystring = {"symbol": symbol}
+    result = AnalysisResult(symbol)
 
 
     response = requests.request("GET", url, headers=headers, params=querystring)
@@ -39,13 +50,10 @@ def get_analysis(symbol):
         print("Error in response")
         return False
     
-    elif response.headers['content-length'] == "0":       
-        print(symbol + " symbol not found")
-        
-        return True
+    elif response.headers['content-length'] == "0":
+        return result
     
     else:
-        #analysis = json.loads(response.text)
         analysis = response.json()
         
         #if analysis.hasOwnProperty('financialData'):
@@ -81,7 +89,18 @@ def get_analysis(symbol):
 #get_analysis("XEQT")
 #get_analysis("THNK.V")
 
+
+
+data = loadsampledata()
+#symbols = data.Symbol.dropna().unique()
+symbols = ['TSLA', 'XEQT', 'THNK.V']
+
+print(len(symbols), symbols)
+
+
+
 for symbol in symbols:
     print("Analyzing " + symbol )
-    get_analysis(symbol)
+    result = get_analysis(symbol)
+    print(result)
     print("-----------")
