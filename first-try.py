@@ -25,16 +25,6 @@ headers = {
     'x-rapidapi-host': "apidojo-yahoo-finance-v1.p.rapidapi.com"
 }
 
-def check_url(url):
-  url = urlparse(url)
-  conn = http.client.HTTPConnection(url.netloc)
-  conn.request("HEAD", url.path)
-  r = conn.getresponse()
-  if r.status == 200:
-    return True
-  else:
-    return False
-
 def get_analysis(symbol):
     url = "https://apidojo-yahoo-finance-v1.p.rapidapi.com/stock/v2/get-analysis"
 
@@ -47,7 +37,7 @@ def get_analysis(symbol):
 #    print (response.headers)
     if response.status_code != 200:
         print("Error in response")
-        return false
+        return False
     
     elif response.headers['content-length'] == "0":       
         print(symbol + " symbol not found")
