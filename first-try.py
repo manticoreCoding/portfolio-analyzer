@@ -25,11 +25,13 @@ def loadsampledata():
 
 class AnalysisResult:
     
+    #Class variables
     instrument_found = False
     instrument_type = 'unknown'
     instrument_symbol = ''
     instrument_data = {}
-
+    
+    #Class constructor
     def __init__(self, symbol):
         self.instrument_symbol = symbol
 
@@ -58,32 +60,41 @@ def get_analysis(symbol):
         
         #if analysis.hasOwnProperty('financialData'):
         if 'financialData' in analysis:
-            #print(json.dumps(analysis, indent = 4, sort_keys=False))
+            result.instrument_type = 'stock'
+        
             keys = ['targetLowPrice', 'targetMedianPrice', 'currentPrice', 'targetMeanPrice', 'targetHighPrice']
             
             for key in keys:
                 if 'fmt' in analysis['financialData'][key]:
-                    print(key + " = " + json.dumps(analysis['financialData'][key]['fmt'], indent = 4, sort_keys=False))
+                    #print("Adding " + key + " = " + json.dumps(analysis['financialData'][key]['fmt'], indent = 4, sort_keys=False))
+                    result.instrument_data[key] = analysis['financialData'][key]['fmt']
+                    result.instrument_found = True
+
                 else:
                     print(key + "value does not exist for " + symbol)
-                    return False
-            #return True
-            return analysis['financialData']
+            
+            return result
     
         #elif analysis.hasOwnProperty('fundPerformance'):
         elif 'fundPerformance' in analysis:
-            print(symbol + "is a fund/ETF")
-            if 'annualTotalReturns' in analysis['fundPerformance']:
-                print(json.dumps(analysis['fundPerformance']['annualTotalReturns'], indent = 4, sort_keys=False))
-                return analysis['fundPerformance']['annualTotalReturns']
-            else:
-                print(len(analysis['fundPerformance']))
-                return False
+            result.instrument_type = 'ETF'
+
+            keys = ['annualTotalReturns']
+
+            for key in keys:
+                if 'annualTotalReturns' in analysis['fundPerformance']:
+                    #print("Adding " + json.dumps(analysis['fundPerformance']['annualTotalReturns'], indent = 4, sort_keys=False))
+                    result.instrument_data['annualTotalReturns'] = analysis['fundPerformance']['annualTotalReturns']
+                    result.instrument_found = True
+                else:
+                    print(key + "value does not exist for " + symbol)
+            
+            return result
 
             
         else:
             print("New category")
-            return True
+            return result
 
 #get_analysis("TSLA"), 
 #get_analysis("XEQT")
@@ -93,7 +104,7 @@ def get_analysis(symbol):
 
 data = loadsampledata()
 #symbols = data.Symbol.dropna().unique()
-symbols = ['TSLA', 'XEQT', 'THNK.V']
+symbols = ['TSLA', 'XEQT', 'XEQT.TO']
 
 print(len(symbols), symbols)
 
@@ -101,6 +112,15 @@ print(len(symbols), symbols)
 
 for symbol in symbols:
     print("Analyzing " + symbol )
-    result = get_analysis(symbol)
-    print(result)
+    analysis = get_analysis(symbol)
+    unknowns = []
+    if result.instrument_found:
+        print(analysis.instrument_symbol, analysis.instrument_type, analysis.instrument_data)
+    else:
+        unknowns.append(analysis)
     print("-----------")
+
+for i in unknowns:
+    print("For the following - Data not found")
+    print(i.instrument_symbol)
+    
