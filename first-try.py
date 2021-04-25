@@ -114,7 +114,7 @@ for symbol in symbols:
     print("Analyzing " + symbol )
     analysis = get_analysis(symbol)
     unknowns = []
-    if result.instrument_found:
+    if analysis.instrument_found:
         print(analysis.instrument_symbol, analysis.instrument_type, analysis.instrument_data)
     else:
         unknowns.append(analysis)
