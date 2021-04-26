@@ -4,8 +4,6 @@ import requests
 import os
 from pathlib import Path
 
-data_loc = r'Portfolio\Positions - Default.csv'
-
 headers = {
     'x-rapidapi-key': "71a5d7c9a5msh0ce9fc09f6a1668p137554jsnde2c9287d2b4",
     'x-rapidapi-host': "apidojo-yahoo-finance-v1.p.rapidapi.com"
@@ -15,7 +13,7 @@ def loadsampledata():
     #data = pd.read_csv('..\..\Portfolio\Positions - Default.csv')
     
     project_path = Path(os.getcwd())
-    data_path = Path(data_loc)
+    data_path = Path(r'Portfolio\Positions - Default.csv')
     #data_path = Path('Portfolio\Positions - Default.csv')
     final_path = os.path.join(project_path.parent.parent, data_path)
 
@@ -123,4 +121,3 @@ for symbol in symbols:
 for i in unknowns:
     print("For the following - Data not found")
     print(i.instrument_symbol)
-    
