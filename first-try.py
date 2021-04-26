@@ -4,7 +4,8 @@ import requests
 import os
 from pathlib import Path
 
-data_loc = r'Portfolio\Positions - Default.csv'
+data_folder = Path("/Portfolio/")
+data_file = "Positions - Default.csv"
 
 headers = {
     'x-rapidapi-key': "71a5d7c9a5msh0ce9fc09f6a1668p137554jsnde2c9287d2b4",
@@ -15,9 +16,9 @@ def loadsampledata():
     #data = pd.read_csv('..\..\Portfolio\Positions - Default.csv')
     
     project_path = Path(os.getcwd())
-    data_path = Path(data_loc)
+    file_to_open = data_folder / data_file
     #data_path = Path('Portfolio\Positions - Default.csv')
-    final_path = os.path.join(project_path.parent.parent, data_path)
+    final_path = os.path.join(project_path.parent.parent, file_to_open)
 
     data = pd.read_csv(final_path)
 
