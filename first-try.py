@@ -1,13 +1,12 @@
 import pandas as pd
 import json
 import requests
+import time
 import os
+import random
 from pathlib import Path
 
-data_folder = Path("/Portfolio/")
-data_file = "Positions - Default.csv"
-
-headers = {
+YAHOO_FINANCE_API_HEADERS = {
     'x-rapidapi-key': "71a5d7c9a5msh0ce9fc09f6a1668p137554jsnde2c9287d2b4",
     'x-rapidapi-host': "apidojo-yahoo-finance-v1.p.rapidapi.com"
 }
@@ -16,9 +15,10 @@ def loadsampledata():
     #data = pd.read_csv('..\..\Portfolio\Positions - Default.csv')
     
     project_path = Path(os.getcwd())
-    file_to_open = data_folder / data_file
+
     #data_path = Path('Portfolio\Positions - Default.csv')
-    final_path = os.path.join(project_path.parent.parent, file_to_open)
+    data_path = Path(r'Portfolio\Positions - Default.csv')
+    final_path = os.path.join(project_path.parent.parent, data_path)
 
     data = pd.read_csv(final_path)
 
@@ -35,7 +35,28 @@ class AnalysisResult:
     #Class constructor
     def __init__(self, symbol):
         self.instrument_symbol = symbol
+        self.instrument_found = False
+        self.instrument_data = {}
+        self.instrument_type = 'unknown'
 
+def rate_limited_request(request_type, request_url, headers, params):
+    max_attempts = 3
+    attempts = 0
+
+    while attempts < max_attempts:
+        # Make a request to Clover REST API
+        #response = requests.get(request_url, headers = {"Authorization": "Bearer " + api_token})
+        response = requests.request(request_type, request_url, headers=headers, params=params)
+        
+        # If not rate limited, break out of while loop and continue with the rest of the code
+        if response.status_code != 429:
+            break
+        
+        # If rate limited, wait and try again
+        time.sleep((2 ** attempts) + random.random())
+        attempts = attempts + 1
+
+    return response
 
 
 def get_analysis(symbol):
@@ -44,9 +65,10 @@ def get_analysis(symbol):
     querystring = {"symbol": symbol}
     result = AnalysisResult(symbol)
 
-
-    response = requests.request("GET", url, headers=headers, params=querystring)
     #response = requests.get(url, headers=headers, params=querystring)
+    #response = requests.request("GET", url, headers=YAHOO_FINANCE_API_HEADERS, params=querystring)
+    response = rate_limited_request("GET", url, YAHOO_FINANCE_API_HEADERS, querystring)
+
     
 #    print (response.headers)
     if response.status_code != 200:
@@ -61,7 +83,7 @@ def get_analysis(symbol):
         
         #if analysis.hasOwnProperty('financialData'):
         if 'financialData' in analysis:
-            result.instrument_type = 'stock'
+            result.instrument_type = 'STOCK'
         
             keys = ['targetLowPrice', 'targetMedianPrice', 'currentPrice', 'targetMeanPrice', 'targetHighPrice']
             
@@ -102,25 +124,40 @@ def get_analysis(symbol):
 #get_analysis("THNK.V")
 
 
-
 data = loadsampledata()
-#symbols = data.Symbol.dropna().unique()
-symbols = ['TSLA', 'XEQT', 'XEQT.TO']
+symbols = data.Symbol.dropna().unique()
+#symbols = ['TSLA', 'XEQT', 'XEQT.TO', 'THNK.V']
 
 print(len(symbols), symbols)
 
+symbol_stocks = []
+symbol_etfs = []
+symbol_unknowns = []
 
-
+'''
 for symbol in symbols:
     print("Analyzing " + symbol )
-    analysis = get_analysis(symbol)
-    unknowns = []
-    if analysis.instrument_found:
-        print(analysis.instrument_symbol, analysis.instrument_type, analysis.instrument_data)
+    analysis = get_analysis(symbol)    
+    if analysis == False:
+        symbol_unknowns.append(symbol)
+    elif analysis.instrument_found:
+            if analysis.instrument_type == "STOCK":
+                symbol_stocks.append(analysis)
+            if analysis.instrument_type == "ETF":
+                symbol_etfs.append(analysis)
     else:
-        unknowns.append(analysis)
-    print("-----------")
+        symbol_unknowns.append(analysis)
 
-for i in unknowns:
-    print("For the following - Data not found")
-    print(i.instrument_symbol)
+print("-------- Results -------")
+
+for i in symbol_stocks:
+    print(i.instrument_symbol, i.instrument_type, i.instrument_data)
+
+for j in symbol_etfs:
+    print(j.instrument_symbol, j.instrument_type)
+
+print("For the following - Data not found")
+for k in symbol_unknowns:
+    print(k.instrument_symbol)
+
+'''
