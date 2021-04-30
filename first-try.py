@@ -4,6 +4,7 @@ import requests
 import time
 import os
 import random
+import csv
 from pathlib import Path
 
 YAHOO_FINANCE_API_HEADERS = {
@@ -11,13 +12,16 @@ YAHOO_FINANCE_API_HEADERS = {
     'x-rapidapi-host': "apidojo-yahoo-finance-v1.p.rapidapi.com"
 }
 
+FIN_DATA_kEYS = ['targetLowPrice', 'targetMedianPrice', 'currentPrice', 'targetMeanPrice', 'targetHighPrice']
+
+
 def loadsampledata():
     #data = pd.read_csv('..\..\Portfolio\Positions - Default.csv')
     
     project_path = Path(os.getcwd())
 
     #data_path = Path('Portfolio\Positions - Default.csv')
-    data_path = Path(r'Portfolio\Positions - Default.csv')
+    data_path = Path(r'Portfolio\Positions - Retirement and TFSA - Default.csv')
     final_path = os.path.join(project_path.parent.parent, data_path)
 
     data = pd.read_csv(final_path)
@@ -85,9 +89,9 @@ def get_analysis(symbol):
         if 'financialData' in analysis:
             result.instrument_type = 'STOCK'
         
-            keys = ['targetLowPrice', 'targetMedianPrice', 'currentPrice', 'targetMeanPrice', 'targetHighPrice']
+            #fin_data_keys = ['targetLowPrice', 'targetMedianPrice', 'currentPrice', 'targetMeanPrice', 'targetHighPrice']
             
-            for key in keys:
+            for key in FIN_DATA_kEYS:
                 if 'fmt' in analysis['financialData'][key]:
                     #print("Adding " + key + " = " + json.dumps(analysis['financialData'][key]['fmt'], indent = 4, sort_keys=False))
                     result.instrument_data[key] = analysis['financialData'][key]['fmt']
@@ -102,9 +106,9 @@ def get_analysis(symbol):
         elif 'fundPerformance' in analysis:
             result.instrument_type = 'ETF'
 
-            keys = ['annualTotalReturns']
+            fund_performance_keys = ['annualTotalReturns']
 
-            for key in keys:
+            for key in fund_performance_keys:
                 if 'annualTotalReturns' in analysis['fundPerformance']:
                     #print("Adding " + json.dumps(analysis['fundPerformance']['annualTotalReturns'], indent = 4, sort_keys=False))
                     result.instrument_data['annualTotalReturns'] = analysis['fundPerformance']['annualTotalReturns']
@@ -134,7 +138,7 @@ symbol_stocks = []
 symbol_etfs = []
 symbol_unknowns = []
 
-'''
+
 for symbol in symbols:
     print("Analyzing " + symbol )
     analysis = get_analysis(symbol)    
@@ -150,8 +154,17 @@ for symbol in symbols:
 
 print("-------- Results -------")
 
+with open('analysis-stock.csv', 'wb') as stockcsvfile:
+    filewriter = csv.writer(stockcsvfile, delimiter=',',
+                            quotechar='|', quoting=csv.QUOTE_MINIMAL)
+    filewriter.writerow(['Symbol', 'Type'] + FIN_DATA_kEYS)
+
 for i in symbol_stocks:
     print(i.instrument_symbol, i.instrument_type, i.instrument_data)
+    datalist = []
+    for key in FIN_DATA_kEYS:
+        datalist.append(i.instrument_data[key])
+    filewriter.writerow([i.instrument_symbol, i.instrument_type] + datalist)
 
 for j in symbol_etfs:
     print(j.instrument_symbol, j.instrument_type)
@@ -160,4 +173,5 @@ print("For the following - Data not found")
 for k in symbol_unknowns:
     print(k.instrument_symbol)
 
-'''
+
+
